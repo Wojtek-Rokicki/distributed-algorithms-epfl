@@ -7,7 +7,7 @@ import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import cs451.broadcast.BestEffortBroadcast;
+import cs451.broadcast.FIFOBroadcast;
 
 
 class Process implements Observer{
@@ -17,7 +17,7 @@ class Process implements Observer{
 	private DatagramSocket socket;
 	private final List<Host> hosts;
 	private final int noMessagesToSend;
-	private final BestEffortBroadcast beb;
+	private final FIFOBroadcast fifo;
 	
 	private ArrayList<Message> deliveredMessages;
 	private final String logFilename;
@@ -38,25 +38,20 @@ class Process implements Observer{
 		} catch (SocketException e) {
 			e.printStackTrace();
 		}
-		this.beb = new BestEffortBroadcast(this, id, port, this.socket, hosts, noMessagesToSend, this.logs);
+		this.fifo = new FIFOBroadcast(this, id, port, this.socket, hosts, noMessagesToSend, this.logs);
 		
 	}
 	
 	public void startBroadcast() {
-		beb.startBroadcast();
+		fifo.startBroadcast();
 	}
 	
-	synchronized public void deliver(Message message) {
-		// Check if it is not in delivered array
-		boolean delivered = deliveredMessages.contains(message);
-		if (!delivered){
-			deliveredMessages.add(message);
-			logs.add(String.format("d %d %d\n", message.getSenderId(), message.getSeqNo()));
-		}
+	public void deliver(Message message) {
+		logs.add(String.format("d %d %d\n", message.getSenderId(), message.getSeqNo()));
 	}
 	
 	public void stopBroadcasting() {
-		BestEffortBroadcast.stop();
+		FIFOBroadcast.stop();
 	}
 	
 	public void writeLogs() {

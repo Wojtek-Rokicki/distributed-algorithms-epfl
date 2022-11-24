@@ -23,6 +23,13 @@ public class Message{
 		this.isAck = isAck;
 	}
 	
+	public Message(Message message) {
+		this.seqNo = message.seqNo;
+		this.senderId = message.senderId;
+		this.destId = message.destId;
+		this.isAck = message.isAck;
+	}
+
 	public byte[] toByteArray() {
 		ByteBuffer byteBuffer = ByteBuffer.allocate(16); 
 		byteBuffer.putInt(seqNo); 

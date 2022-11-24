@@ -37,7 +37,7 @@ class UDPReceiver {
 		
 		Message message = Message.fromByteArray(packet.getData());
 		
-		if (!message.isAck()) {
+		if (!message.isAck() && message.getSenderId()==host.getId()) {
 			message.ack();
 			byte[] byteMessage = message.toByteArray();
 			DatagramPacket ackPacket = new DatagramPacket(byteMessage, byteMessage.length, packet.getAddress(), packet.getPort());
