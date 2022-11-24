@@ -9,7 +9,7 @@ public class Message{
 	private final int destId;
 	private int isAck;
 	
-	Message(int seqNo, int senderId, int destId){
+	public Message(int seqNo, int senderId, int destId){
 		this.seqNo = seqNo;
 		this.senderId = senderId;
 		this.destId = destId;

@@ -96,7 +96,7 @@ public class Main {
         }
         
         String[] splits = line.split("\\s+");
-        int messagesReceiverProcessId = Integer.parseInt(splits[1]);
+        //int messagesReceiverProcessId = Integer.parseInt(splits[1]);
         int noOfMessagesToSend = Integer.parseInt(splits[0]);
         
         
@@ -105,9 +105,9 @@ public class Main {
         for (var host: parser.hosts()) {
         	if(myId == host.getId()) {
         		List<Host> hosts = parser.hosts();
-        		hosts.remove(host);
-        		noOfMessagesToSend = myId != messagesReceiverProcessId ? noOfMessagesToSend : 0;
-        		process = new Process(host.getId(), host.getIp(), host.getPort(), hosts, noOfMessagesToSend, messagesReceiverProcessId, parser.output());
+        		//hosts.remove(host);
+        		//noOfMessagesToSend = myId != messagesReceiverProcessId ? noOfMessagesToSend : 0;
+        		process = new Process(host.getId(), host.getIp(), host.getPort(), hosts, noOfMessagesToSend, parser.output());
         		break;
         	}
         }
