@@ -15,25 +15,27 @@ public class BestEffortBroadcast implements Observer{
 	private final Observer observer;
 	private final int id;
 	private DatagramSocket socket;
-	private List<PerfectLink> PerfectLinks;
-	private HashMap <Integer, ArrayList<Message>> messagesToSend;
+	private List<Host> hosts;
+	private List<PerfectLink> perfectLinks;
+	private HashMap <Integer, ConcurrentLinkedQueue<Message>> messagesToSend;
 	private ConcurrentLinkedQueue<String> logs;
 	
 	public BestEffortBroadcast(Observer observer, int id, int port, DatagramSocket socket, List<Host> hosts, int noMessagesToSend, ConcurrentLinkedQueue<String> logs){
 		this.observer = observer;
 		this.id = id;
 		this.socket = socket;
-		this.messagesToSend = new HashMap <Integer, ArrayList<Message>>(); 
+		this.hosts = hosts;
+		this.messagesToSend = new HashMap <Integer, ConcurrentLinkedQueue<Message>>(); 
 		this.messagesToSend = createMessagesToSend(noMessagesToSend, hosts);
-		this.PerfectLinks = new ArrayList <PerfectLink>();
+		this.perfectLinks = new ArrayList <PerfectLink>();
 		for (Host host: hosts) {
-			this.PerfectLinks.add(new PerfectLink(this, id, port, this.socket, host, messagesToSend.get(host.getId())));
+			this.perfectLinks.add(new PerfectLink(this, id, port, this.socket, host, messagesToSend.get(host.getId())));
 		}
 		this.logs = logs;
 	}
 	
 	public void startBroadcast() {
-		for (PerfectLink link: PerfectLinks) {
+		for (PerfectLink link: perfectLinks) {
 			Thread t = new Thread(link);
 			t.start();
 		}
@@ -43,6 +45,13 @@ public class BestEffortBroadcast implements Observer{
 			}
 			break;
 		}
+	}
+	
+	public void sendMessage(Message m) {
+		for (Host host: hosts) {
+			ConcurrentLinkedQueue<Message> cql = messagesToSend.get(host.getId());
+			cql.add(new Message(m));
+		}	
 	}
 
 	@Override
@@ -54,12 +63,12 @@ public class BestEffortBroadcast implements Observer{
 		PerfectLink.stop();
 	}
 	
-	private HashMap<Integer, ArrayList<Message>> createMessagesToSend(int noMessagesToSend, List<Host> hosts){
-		HashMap<Integer, ArrayList<Message>> messagesToSend = new HashMap <Integer, ArrayList<Message>>();
+	private HashMap<Integer, ConcurrentLinkedQueue<Message>> createMessagesToSend(int noMessagesToSend, List<Host> hosts){
+		HashMap<Integer, ConcurrentLinkedQueue<Message>> messagesToSend = new HashMap <Integer, ConcurrentLinkedQueue<Message>>();
 		for (Host host: hosts) {
-			ArrayList<Message> listOfMessagesToSend = new ArrayList<>();
+			ConcurrentLinkedQueue<Message> listOfMessagesToSend = new ConcurrentLinkedQueue<>();
 			for (int i = 0; i<noMessagesToSend; i++) {
-				listOfMessagesToSend.add(new Message(i+1, id, host.getId()));
+				listOfMessagesToSend.add(new Message(i+1, id, id, host.getId()));
 			}
 			messagesToSend.put(host.getId(), listOfMessagesToSend);
 		}

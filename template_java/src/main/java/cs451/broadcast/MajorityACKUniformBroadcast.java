@@ -1,28 +1,85 @@
 package cs451.broadcast;
 
+import java.net.DatagramSocket;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
+import cs451.Host;
 import cs451.Message;
+import cs451.Observer;
 
-class MajorityACKUniformBroadcast{
+public class MajorityACKUniformBroadcast implements Observer{
+	private final Observer observer;
+	private final int id;
+	private DatagramSocket socket;
+	private List<Host> hosts;
+	private final int noMessagesToSend;
+	
 	private Integer N;
 	private ArrayList<Message> delivered;
 	private ArrayList<Message> pending;
 	private HashMap <Message, ArrayList<Integer>> ack;
+	private BestEffortBroadcast beb;
 	
-	MajorityACKUniformBroadcast(){
+	public MajorityACKUniformBroadcast(Observer observer, int id, int port, DatagramSocket socket, List<Host> hosts, int noMessagesToSend, ConcurrentLinkedQueue<String> logs){
+		this.observer = observer;
+		this.id = id;
+		this.socket = socket;
+		this.hosts = hosts;
+		this.noMessagesToSend = noMessagesToSend;
+		
+		this.N = hosts.size();
 		this.delivered = new ArrayList<Message>();
 		this.pending = new ArrayList<Message>();
-		//forall m do ack[m] := ∅;
-		
+		this.ack = new HashMap <Message, ArrayList<Integer>>();
+		this.beb = new BestEffortBroadcast(this, id, port, this.socket, hosts, noMessagesToSend, logs);
+	}
+	
+	public void startBroadcast() {
+		initPending();
+		beb.startBroadcast();
 	}
 	
 	public void broadcast(Message m) {
 		pending.add(m);
+		beb.sendMessage(m);
 	}
 
 	private boolean canDeliver(Message m) {
-		return (boolean)(ack.get(m).size() > (N/2));
+		return (boolean)(ack.get(m).size() >= (N/2));
+	}
+	
+	@Override
+	public void deliver(Message m) {
+		if(m.getResenderId()!=id) {
+			System.out.println("Got mssg from other proc");
+		}
+		if(!ack.containsKey(m)) {
+			ack.put(m, new ArrayList<Integer>());
+		}
+		ack.get(m).add(m.getResenderId());
+		if (!pending.contains(m)) {
+			m.setResenderId(id);
+			broadcast(m);
+		}
+		if (canDeliver(m) && !delivered.contains(m)) {
+			delivered.add(m);
+			observer.deliver(m);
+		}
+		
+	}
+	
+	public void initPending() {
+		for (Host host: hosts) {
+			for (int i = 0; i<noMessagesToSend; i++) {
+				pending.add(new Message(i+1, id, id, host.getId()));
+			}
+		}
+	}
+	
+	public static void stop() {
+		BestEffortBroadcast.stop();
 	}
 }

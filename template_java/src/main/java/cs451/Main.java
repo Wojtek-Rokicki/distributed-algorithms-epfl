@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.List;
 import java.util.Scanner;
+import java.util.concurrent.TimeUnit;
 
 public class Main {
 
@@ -14,6 +15,11 @@ public class Main {
         System.out.println("Immediately stopping network packet processing.");
         process.stopBroadcasting();
         
+        try {
+			TimeUnit.SECONDS.sleep(1);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
         //write/flush output file if necessary
         System.out.println("Writing output.");
         process.writeLogs();

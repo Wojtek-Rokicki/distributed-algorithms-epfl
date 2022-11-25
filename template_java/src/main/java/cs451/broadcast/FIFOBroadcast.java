@@ -21,7 +21,7 @@ public class FIFOBroadcast implements Observer{
 	private int N;
 	private int[] next;
 	private ArrayList<Message> pending;
-	private BestEffortBroadcast beb;
+	private MajorityACKUniformBroadcast unif;
 
 	
 	public FIFOBroadcast(Observer observer, int id, int port, DatagramSocket socket, List<Host> hosts, int noMessagesToSend, ConcurrentLinkedQueue<String> logs){
@@ -34,15 +34,15 @@ public class FIFOBroadcast implements Observer{
 		this.next = new int[N];
 		Arrays.fill(this.next, 1);
 		this.pending = new ArrayList<Message>();
-		this.beb = new BestEffortBroadcast(this, id, port, this.socket, hosts, noMessagesToSend, this.logs);
+		this.unif = new MajorityACKUniformBroadcast(this, id, port, this.socket, hosts, noMessagesToSend, this.logs);
 	}
 	
 	public void startBroadcast() {
-		beb.startBroadcast();
+		unif.startBroadcast();
 	}
 	
 	public static void stop() {
-		BestEffortBroadcast.stop();
+		MajorityACKUniformBroadcast.stop();
 	}
 	
 	public boolean containsMssgWithSeqNo(final List<Message> list, final int sn){

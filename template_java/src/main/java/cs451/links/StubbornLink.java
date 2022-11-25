@@ -23,12 +23,12 @@ public class StubbornLink implements Observer, Runnable{
 		
 	private static boolean run = false;
 	
-	public StubbornLink(Observer observer, int id, int port, DatagramSocket socket, Host host, List <Message> messagesToSend){
+	public StubbornLink(Observer observer, int id, int port, DatagramSocket socket, Host host, ConcurrentLinkedQueue <Message> messagesToSend){
 		this.observer = observer;
 //		this.id = id;
 //		this.port = port;
 //		this.host = host;
-		this.messagesToSend = new ConcurrentLinkedQueue<Message>(new ArrayList <Message>(messagesToSend));
+		this.messagesToSend = messagesToSend;
 		this.socket = socket;
 		this.sender = new UDPSender(this.socket, host, this.messagesToSend);
 		this.receiver = new UDPReceiver(this, id, host, this.socket, this.messagesToSend);
@@ -49,5 +49,6 @@ public class StubbornLink implements Observer, Runnable{
 	
 	public static void stop() {
 		run = false;
+		UDPSender.run = false;
 	}
 }
