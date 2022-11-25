@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.net.DatagramSocket;
 import java.net.SocketException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import cs451.broadcast.FIFOBroadcast;
@@ -16,7 +17,7 @@ class Process implements Observer{
 	private final int port;
 	private DatagramSocket socket;
 	private final List<Host> hosts;
-	private final int noMessagesToSend;
+	private HashMap <Integer, ArrayList<Message>> messagesToSend;
 	private final FIFOBroadcast fifo;
 	
 	private ArrayList<Message> deliveredMessages;
@@ -29,7 +30,7 @@ class Process implements Observer{
 		this.ip = ip;
 		this.port = port;
 		this.hosts = hosts;
-		this.noMessagesToSend = noMessagesToSend;
+		this.messagesToSend = createMessagesToSend(noMessagesToSend, hosts);
 		this.deliveredMessages = new ArrayList <Message>();
 		this.logFilename = logFilename;
 		this.logs = new ConcurrentLinkedQueue<>();
@@ -38,12 +39,16 @@ class Process implements Observer{
 		} catch (SocketException e) {
 			e.printStackTrace();
 		}
-		this.fifo = new FIFOBroadcast(this, id, port, this.socket, hosts, noMessagesToSend, this.logs);
+		this.fifo = new FIFOBroadcast(this, id, port, this.socket, hosts, this.logs);
 		
 	}
 	
 	public void startBroadcast() {
-		fifo.startBroadcast();
+		for (Host host: hosts) {
+			for (Message m: messagesToSend.get(host)) {
+				fifo.startBroadcast(m);
+			}
+		}
 	}
 	
 	public void deliver(Message message) {
@@ -66,5 +71,17 @@ class Process implements Observer{
 		} catch (IOException e1) {
 			e1.printStackTrace();
 		}
+	}
+	
+	private HashMap<Integer, ArrayList<Message>> createMessagesToSend(int noMessagesToSend, List<Host> hosts){
+		HashMap<Integer, ArrayList<Message>> messagesToSend = new HashMap <Integer, ArrayList<Message>>();
+		for (Host host: hosts) {
+			ArrayList<Message> listOfMessagesToSend = new ArrayList<>();
+			for (int i = 0; i<noMessagesToSend; i++) {
+				listOfMessagesToSend.add(new Message(i+1, id, host.getId()));
+			}
+			messagesToSend.put(host.getId(), listOfMessagesToSend);
+		}
+		return messagesToSend;
 	}
 }

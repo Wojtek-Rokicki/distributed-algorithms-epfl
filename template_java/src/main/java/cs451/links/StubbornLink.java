@@ -21,7 +21,7 @@ public class StubbornLink implements Observer, Runnable{
 	private UDPSender sender;
 	private UDPReceiver receiver;
 		
-	private static boolean run = false;
+	private static boolean run = true;
 	
 	public StubbornLink(Observer observer, int id, int port, DatagramSocket socket, Host host, List <Message> messagesToSend){
 		this.observer = observer;
@@ -35,7 +35,6 @@ public class StubbornLink implements Observer, Runnable{
 	}
 	
 	public void run() {
-		run = true;
 		Thread senderThread = new Thread(sender);
 		senderThread.start();
 		while(run) {
@@ -48,6 +47,7 @@ public class StubbornLink implements Observer, Runnable{
 	}
 	
 	public static void stop() {
+		UDPSender.run = false;
 		run = false;
 	}
 }

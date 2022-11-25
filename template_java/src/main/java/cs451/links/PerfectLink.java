@@ -13,14 +13,18 @@ public class PerfectLink implements Observer, Runnable{
 	private final StubbornLink stubbornLink;
 	private ArrayList<Message> deliveredMessages;
 	
-	public PerfectLink(Observer observer, int id, int port, DatagramSocket socket, Host host, List <Message> messagesToSend){
+	public PerfectLink(Observer observer, int id, int port, DatagramSocket socket, Host host){
 		this.observer = observer;
 		this.deliveredMessages = new ArrayList<Message>();
-		this.stubbornLink = new StubbornLink(this, id, port, socket, host, messagesToSend);
+		this.stubbornLink = new StubbornLink(this, id, port, socket, host);
 	}
 		
 	public void run() {
 		stubbornLink.run();
+	}
+	
+	public void send(Message m) {
+		stubbornLink.send(m);
 	}
 	
 	public void deliver(Message message) {

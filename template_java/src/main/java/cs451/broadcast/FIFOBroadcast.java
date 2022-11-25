@@ -24,7 +24,7 @@ public class FIFOBroadcast implements Observer{
 	private BestEffortBroadcast beb;
 
 	
-	public FIFOBroadcast(Observer observer, int id, int port, DatagramSocket socket, List<Host> hosts, int noMessagesToSend, ConcurrentLinkedQueue<String> logs){
+	public FIFOBroadcast(Observer observer, int id, int port, DatagramSocket socket, List<Host> hosts, ConcurrentLinkedQueue<String> logs){
 		this.observer = observer;
 		this.id = id;
 		this.port = port;
@@ -34,11 +34,11 @@ public class FIFOBroadcast implements Observer{
 		this.next = new int[N];
 		Arrays.fill(this.next, 1);
 		this.pending = new ArrayList<Message>();
-		this.beb = new BestEffortBroadcast(this, id, port, this.socket, hosts, noMessagesToSend, this.logs);
+		this.beb = new BestEffortBroadcast(this, id, port, this.socket, hosts, this.logs);
 	}
 	
-	public void startBroadcast() {
-		beb.startBroadcast();
+	public void startBroadcast(Message m) {
+		beb.startBroadcast(m);
 	}
 	
 	public static void stop() {

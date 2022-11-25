@@ -13,6 +13,7 @@ import java.io.IOException;
 
 // Sends packet
 class UDPSender implements Runnable{
+	public static boolean run = true;
 	private InetAddress ipAddress;
 	private final int targetPort;
 	private ConcurrentLinkedQueue <Message> messagesToSend;
@@ -32,14 +33,16 @@ class UDPSender implements Runnable{
 	
 	public void run() {
 		System.out.println("++Sending to node with port "+targetPort+" started.");
-		while (messagesToSend.size() != 0) {
-			for (Message m: messagesToSend) {
-				byte[] byteMessage = m.toByteArray();
-				DatagramPacket packet = new DatagramPacket(byteMessage, byteMessage.length, ipAddress, targetPort);
-				try {
-					socket.send(packet);
-				} catch (IOException e) {
-					e.printStackTrace();
+		while (run) {
+			if(messagesToSend.size() != 0) {
+				for (Message m: messagesToSend) {
+					byte[] byteMessage = m.toByteArray();
+					DatagramPacket packet = new DatagramPacket(byteMessage, byteMessage.length, ipAddress, targetPort);
+					try {
+						socket.send(packet);
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
 				}
 			}
 		}		
