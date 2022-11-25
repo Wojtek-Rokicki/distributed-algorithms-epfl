@@ -47,24 +47,27 @@ public class MajorityACKUniformBroadcast implements Observer{
 		beb.sendMessage(m);
 	}
 
-	private boolean canDeliver(Message m) {
-		return (boolean)(ack.get(m).size() >= (N/2));
+	private boolean canDeliver(Message m, List<Message> keys) {
+		int processesSawM = ack.get(keys.get(keys.indexOf(m))).size();
+		int majority = (int)(N/2);
+		return (boolean)(processesSawM > majority);
 	}
 	
 	@Override
-	public void deliver(Message m) {
-		if(m.getResenderId()!=id) {
-			System.out.println("Got mssg from other proc");
-		}
-		if(!ack.containsKey(m)) {
+	synchronized public void deliver(Message m) {
+		List<Message> keys = new ArrayList<Message>();
+		keys.addAll(ack.keySet());
+		if(!keys.contains(m)) {
 			ack.put(m, new ArrayList<Integer>());
+			keys.add(m);
 		}
-		ack.get(m).add(m.getResenderId());
+		ack.get(keys.get(keys.indexOf(m))).add(m.getResenderId());
 		if (!pending.contains(m)) {
 			m.setResenderId(id);
+			m.setAck(0);
 			broadcast(m);
 		}
-		if (canDeliver(m) && !delivered.contains(m)) {
+		if (canDeliver(m, keys) && !delivered.contains(m)) {
 			delivered.add(m);
 			observer.deliver(m);
 		}

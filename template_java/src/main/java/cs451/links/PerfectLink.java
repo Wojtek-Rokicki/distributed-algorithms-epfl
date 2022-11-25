@@ -29,6 +29,8 @@ public class PerfectLink implements Observer, Runnable{
 		if (!delivered){
 			deliveredMessages.add(new Message(message));
 			observer.deliver(message);
+		} else if (deliveredMessages.get(deliveredMessages.indexOf(message)).getResenderId()!=message.getResenderId()) {
+			observer.deliver(message);
 		}
 	}
 	

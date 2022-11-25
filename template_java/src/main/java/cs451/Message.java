@@ -61,6 +61,9 @@ public class Message{
 	public boolean isAck() {
 		return (isAck != 0);
 	}
+	public void setAck(int ack) {
+		this.isAck = ack;
+	}
 
 	public int getSeqNo() {
 		return seqNo;
