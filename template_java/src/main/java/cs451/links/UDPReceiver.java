@@ -35,11 +35,21 @@ class UDPReceiver {
 			e.printStackTrace();
 		}
 		
-		Message message = Message.fromByteArray(packet.getData());
+		Message message = null;
+		try {
+			message = Message.fromByteArray(packet.getData());
+		} catch (ClassNotFoundException | IOException e1) {
+			e1.printStackTrace();
+		}
 		
 		if (!message.isAck() && message.getSenderId()==host.getId()) {
 			message.ack();
-			byte[] byteMessage = message.toByteArray();
+			byte[] byteMessage = null;
+			try {
+				byteMessage = message.toByteArray();
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
 			DatagramPacket ackPacket = new DatagramPacket(byteMessage, byteMessage.length, packet.getAddress(), packet.getPort());
 			try {
 				socket.send(ackPacket);

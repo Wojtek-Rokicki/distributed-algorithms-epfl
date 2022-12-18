@@ -105,7 +105,7 @@ public class Main {
         	if(myId == host.getId()) {
         		List<Host> hosts = parser.hosts();
         		hosts.remove(host);
-        		process = new Process(host.getId(), host.getIp(), host.getPort(), hosts, config, parser.output());
+        		process = new Process(host.getId(), host.getPort(), hosts, config, parser.output());
         		break;
         	}
         }

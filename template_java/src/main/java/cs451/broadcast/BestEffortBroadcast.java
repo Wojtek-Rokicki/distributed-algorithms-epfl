@@ -4,7 +4,6 @@ import java.net.DatagramSocket;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 import cs451.Host;
 import cs451.Message;
@@ -17,23 +16,19 @@ public class BestEffortBroadcast implements Observer{
 	private final int port;
 	private DatagramSocket socket;
 	private List<Host> hosts;
-	private List<PerfectLink> perfectLinks;
-	private HashMap <Integer, ArrayList<Message>> messagesToSend;
-	private ConcurrentLinkedQueue<String> logs;
+ 	private List<PerfectLink> perfectLinks;
 	
-	public BestEffortBroadcast(Observer observer, int id, int port, DatagramSocket socket, List<Host> hosts, String[] config, ConcurrentLinkedQueue<String> logs){
+	public BestEffortBroadcast(Observer observer, int id, int port, DatagramSocket socket, List<Host> hosts){
 		this.observer = observer;
 		this.id = id;
 		this.port = port;
 		this.socket = socket;
-		this.messagesToSend = new HashMap <Integer, ArrayList<Message>>(); 
-		this.messagesToSend = createMessagesToSend(message, hosts);
 		this.perfectLinks = new ArrayList <PerfectLink>();
 		this.hosts = hosts;
-		this.logs = logs;
 	}
 	
 	public void startBroadcast(Message m) {
+		HashMap <Integer, ArrayList<Message>> messagesToSend = createMessagesToSend(m, hosts);
 		for (Host host: hosts) {
 			this.perfectLinks.add(new PerfectLink(this, id, port, this.socket, host, messagesToSend.get(host.getId())));
 		}
@@ -52,17 +47,17 @@ public class BestEffortBroadcast implements Observer{
 		PerfectLink.stop();
 	}
 	
-	private HashMap<Integer, Message> createMessagesToSend(String[] config, List<Host> hosts){
+	private HashMap<Integer, ArrayList<Message>> createMessagesToSend(Message m, List<Host> hosts){
 		HashMap<Integer, ArrayList<Message>> messagesToSend = new HashMap <Integer, ArrayList<Message>>();
 		for (Host host: hosts) {
 			ArrayList<Message> listOfMessagesToSend = new ArrayList<>();
-			for (int i = 0; i<noMessagesToSend; i++) {
-				listOfMessagesToSend.add(new Message(i+1, id, host.getId()));
-			}
+			Message message = new Message(m);
+			message.setSenderId(id);
+			message.setDestId(host.getId());
+			listOfMessagesToSend.add(message);
 			messagesToSend.put(host.getId(), listOfMessagesToSend);
 		}
 		return messagesToSend;
 	}
-
 	
 }

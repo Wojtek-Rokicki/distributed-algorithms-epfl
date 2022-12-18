@@ -34,7 +34,12 @@ class UDPSender implements Runnable{
 		System.out.println("++Sending to node with port "+targetPort+" started.");
 		while (messagesToSend.size() != 0) {
 			for (Message m: messagesToSend) {
-				byte[] byteMessage = m.toByteArray();
+				byte[] byteMessage = null;
+				try {
+					byteMessage = m.toByteArray();
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
 				DatagramPacket packet = new DatagramPacket(byteMessage, byteMessage.length, ipAddress, targetPort);
 				try {
 					socket.send(packet);

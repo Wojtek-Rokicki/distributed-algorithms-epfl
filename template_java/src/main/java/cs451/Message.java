@@ -11,27 +11,43 @@ import java.util.Set;
 
 public class Message implements Serializable{
 	private final int slot;
+	private int senderId;
+	private int destId;
 	private final MssgType mssgType;
 	private final int propNo;
 	private final Set<Integer> propVals;
 	private int isAck;
 	
-	enum MssgType{
+	public enum MssgType{
 		PROPOSAL,
 		ACK,
 		NACK
 	}
 	
-	public Message(int slot, MssgType mssgType, int propNo, Set<Integer> propVals){
+	public Message(int slot, int senderId, int destId, MssgType mssgType, int propNo, Set<Integer> propVals){
 		this.slot = slot;
+		this.senderId = senderId;
+		this.destId = destId;
 		this.mssgType = mssgType;
 		this.propNo = propNo;
 		this.propVals = propVals;
 		this.isAck = 0;
 	}
 	
-	Message(int slot, MssgType mssgType, int propNo, Set<Integer> propVals, int isAck){
+	public Message(int slot, MssgType mssgType, int propNo, Set<Integer> propVals){
 		this.slot = slot;
+		this.senderId = -1;
+		this.destId = -1;
+		this.mssgType = mssgType;
+		this.propNo = propNo;
+		this.propVals = propVals;
+		this.isAck = 0;
+	}
+	
+	Message(int slot, int senderId, int destId, MssgType mssgType, int propNo, Set<Integer> propVals, int isAck){
+		this.slot = slot;
+		this.senderId = senderId;
+		this.destId = destId;
 		this.mssgType = mssgType;
 		this.propNo = propNo;
 		this.propVals = propVals;
@@ -40,6 +56,8 @@ public class Message implements Serializable{
 	
 	public Message(Message message) {
 		this.slot = message.slot;
+		this.senderId = message.senderId;
+		this.destId = message.destId;
 		this.mssgType = message.mssgType;
 		this.propNo = message.propNo;
 		this.propVals = message.propVals;
@@ -78,6 +96,20 @@ public class Message implements Serializable{
 		return slot;
 	}
 	
+	public int getSenderId() {
+		return senderId;
+	}
+	public int getDestId() {
+		return destId;
+	}
+	
+	public void setSenderId(int senderId) {
+		 this.senderId = senderId;
+	}
+	public void setDestId(int destId) {
+		this.destId = destId;
+	}	
+	
 	public MssgType getMssgType() {
 		return mssgType;
 	}
@@ -94,6 +126,8 @@ public class Message implements Serializable{
 		if (o == null || getClass() != o.getClass()) return false;
 		Message m = (Message) o;
 		return (Objects.equals(slot, m.slot) &&
+				Objects.equals(senderId, m.senderId) &&
+				Objects.equals(destId, m.destId) &&
 				Objects.equals(mssgType, m.mssgType) &&
 				Objects.equals(propNo, m.propNo) &&
 				Objects.equals(propVals, m.propVals));

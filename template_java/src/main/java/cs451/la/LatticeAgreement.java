@@ -21,79 +21,64 @@ public class LatticeAgreement implements Observer, Runnable{
 	private final int port;
 	private DatagramSocket socket;
 	private ConcurrentLinkedQueue<String> logs;
-	private int N;
-	private int[] next;
-	private ArrayList<Message> pending;
 	private BestEffortBroadcast beb;
+	
+	private final int slot;
 	
 	private boolean active;
 	private int ackCount;
 	private int nackCount;
 	private int activePropNo;
 	private Set<Integer> propVals;
-	
+	private Set<Integer> acceptedVals;
 
 	
-	public LatticeAgreement(Observer observer, int id, int port, DatagramSocket socket, List<Host> hosts, String[] config, ConcurrentLinkedQueue<String> logs){
+	public LatticeAgreement(Observer observer, int id, int port, DatagramSocket socket, List<Host> hosts, ConcurrentLinkedQueue<String> logs, int slot, Set<Integer> propVals){
 		this.observer = observer;
 		this.id = id;
 		this.port = port;
 		this.socket = socket;
 		this.logs = logs;
-		this.N = hosts.size();
-		this.next = new int[N];
-		Arrays.fill(this.next, 1);
-		this.pending = new ArrayList<Message>();
-		this.beb = new BestEffortBroadcast(this, id, port, this.socket, hosts, noMessagesToSend, this.logs);
+		this.beb = new BestEffortBroadcast(this, id, port, this.socket, hosts);
+		
+		this.slot = slot;
 	
 		this.active = false;
 		this.ackCount = 0;
 		this.nackCount = 0;
 		this.activePropNo = 0;
-		this.propVals = new HashSet<Integer>();
+		this.propVals = propVals;
+		this.acceptedVals = new HashSet<Integer>();
 	}
 	
 	public void run() {
-		stubbornLink.run();
+		this.propose();
 	}
 	
-	public void propose(Set<Integer> proposal) {
-		this.propVals = proposal;
-		Message message = new Message(proposal);
-	}
-	
-	public void startBroadcast() {
-		beb.startBroadcast();
+	public void propose() {
+		this.active = true;
+		this.activePropNo += 1;
+		this.ackCount = 0;
+		this.nackCount = 0;
+		Message message = new Message(slot, Message.MssgType.PROPOSAL, this.activePropNo, this.propVals);
+		this.beb.startBroadcast(message);
 	}
 	
 	public static void stop() {
 		BestEffortBroadcast.stop();
 	}
 	
-	public boolean containsMssgWithSeqNo(final List<Message> list, final int sn){
-	    return list.stream().filter(m -> ((Integer)m.getSeqNo()).equals((Integer)sn)).findFirst().isPresent();
-	}
-	
-	public Message mssgWithSeqNo(final List<Message> list, final int sn) {
-		return list.stream()
-			    .filter(m -> Objects.equals(m.getSeqNo(), sn))
-			    .collect(Collectors.toList()).get(0);
-	}
 	
 	synchronized public void deliver(Message message) {
-		pending.add(new Message(message));
-		// Get pending messages from message's sender
-		int senderId = message.getSenderId();
-		List<Message> messagesFromSender = pending.stream()
-		    .filter(m -> Objects.equals(m.getSenderId(), senderId))
-		    .collect(Collectors.toList());
-		// While there is a message which can be delivered, deliver.
-		while(containsMssgWithSeqNo(messagesFromSender, next[senderId-1])) {
-			Message nextMessage = mssgWithSeqNo(messagesFromSender, next[senderId-1]);
-			pending.remove(nextMessage);
-			observer.deliver(nextMessage);
-			next[senderId-1] = next[senderId-1]+1;
+		Message.MssgType mType = message.getMssgType();
+		if (mType == Message.MssgType.ACK) {
+			
+		} else if (mType == Message.MssgType.NACK) {
+			
+		} else if (mType == Message.MssgType.PROPOSAL) {
+			
 		}
+		
 	}
 	
 }

@@ -10,30 +10,25 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import cs451.la.LatticeAgreement;
-import cs451.links.PerfectLink;
 
 
 class Process implements Observer{
 	private final int id;
-	private final String ip;
 	private final int port;
 	private DatagramSocket socket;
 	private final List<Host> hosts;
 	private final String[] config;
 	private List<LatticeAgreement> latticeAgreements;
 	
-	private ArrayList<Message> deliveredMessages;
 	private final String logFilename;
 		
 	private ConcurrentLinkedQueue<String> logs;
 	
-	Process(int id, String ip, int port, List<Host> hosts, String[] config, String logFilename){
+	Process(int id, int port, List<Host> hosts, String[] config, String logFilename){
 		this.id = id;
-		this.ip = ip;
 		this.port = port;
 		this.hosts = hosts;
 		this.config = config;
-		this.deliveredMessages = new ArrayList <Message>();
 		this.logFilename = logFilename;
 		this.logs = new ConcurrentLinkedQueue<>();
 		try {
@@ -41,31 +36,32 @@ class Process implements Observer{
 		} catch (SocketException e) {
 			e.printStackTrace();
 		}
-		this.latticeAgreements = new ArrayList <LatticeAgreement>();
-		this.la = new LatticeAgreement(this, id, port, this.socket, hosts, config, this.logs);
-		
+		this.latticeAgreements = new ArrayList <LatticeAgreement>();		
 	}
 	
 	public void startBroadcast() {		
 		for (int i = 1; i < config.length; i++) {
         	String[] proposal = config[i].split("\\s+");
         	Set<Integer> proposalSet = new HashSet<Integer>();
-        	for (int j; j < proposal.length; j++) {
+        	for (int j = 0; j < proposal.length; j++) {
         		int val = Integer.parseInt(proposal[j]);
         		proposalSet.add(val);
         	}
-        	this.latticeAgreements.add(new LatticeAgreement(this, id, port, this.socket, host, message));
+        	this.latticeAgreements.add(new LatticeAgreement(this, id, port, this.socket, hosts, logs, i, proposalSet));
 		}
 		
-		for (PerfectLink link: PerfectLinks) {
+		for (LatticeAgreement link: latticeAgreements) {
 			Thread t = new Thread(link);
 			t.start();
 		}
-		la.startBroadcast();
 	}
 	
 	public void deliver(Message message) {
-		logs.add(String.format("d %d %d\n", message.getSenderId(), message.getSeqNo()));
+		String log = "";
+		for (Integer value : message.getPropVals()) {
+			log += Integer.toString(value) + " ";
+		}
+		logs.add(log+"\n");
 	}
 	
 	public void stopBroadcasting() {
