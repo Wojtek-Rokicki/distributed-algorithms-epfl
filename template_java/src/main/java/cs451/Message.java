@@ -44,6 +44,16 @@ public class Message implements Serializable{
 		this.isAck = 0;
 	}
 	
+	public Message(int slot, Set<Integer> propVals) {
+		this.slot = slot;
+		this.senderId = -1;
+		this.destId = -1;
+		this.mssgType = null;
+		this.propNo = -1;
+		this.propVals = propVals;
+		this.isAck = 0;	
+	}
+	
 	Message(int slot, int senderId, int destId, MssgType mssgType, int propNo, Set<Integer> propVals, int isAck){
 		this.slot = slot;
 		this.senderId = senderId;
