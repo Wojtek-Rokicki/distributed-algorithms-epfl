@@ -73,15 +73,17 @@ public class Main {
 
         System.out.println("Doing some initialization\n");
         
-        // Read the content of config file
+     // Read the content of config file
         String configFilePath = parser.config();
         File configFile = new File(configFilePath);
 		Scanner configScanner = null;
         String line = null;
         try {
 			configScanner = new Scanner(configFile);
-			configScanner.hasNextLine();
-			line = configScanner.nextLine();
+			line = "";
+			while(configScanner.hasNextLine()) {
+				line += configScanner.nextLine() + "\n";
+			}
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} finally {
@@ -95,19 +97,15 @@ public class Main {
         	System.exit(0);
         }
         
-        String[] splits = line.split("\\s+");
-        //int messagesReceiverProcessId = Integer.parseInt(splits[1]);
-        int noOfMessagesToSend = Integer.parseInt(splits[0]);
-        
+        String[] config = line.split("\n");
         
         // Prepare the list of hosts list for the process
         int myId = parser.myId();
         for (var host: parser.hosts()) {
         	if(myId == host.getId()) {
         		List<Host> hosts = parser.hosts();
-        		//hosts.remove(host);
-        		//noOfMessagesToSend = myId != messagesReceiverProcessId ? noOfMessagesToSend : 0;
-        		process = new Process(host.getId(), host.getIp(), host.getPort(), hosts, noOfMessagesToSend, parser.output());
+        		hosts.remove(host);
+        		process = new Process(host.getId(), host.getIp(), host.getPort(), hosts, config, parser.output());
         		break;
         	}
         }

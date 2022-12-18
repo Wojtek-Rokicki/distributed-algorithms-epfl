@@ -5,9 +5,12 @@ import java.io.IOException;
 import java.net.DatagramSocket;
 import java.net.SocketException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import cs451.broadcast.FIFOBroadcast;
+import cs451.la.LatticeAgreement;
+import cs451.links.PerfectLink;
 
 
 class Process implements Observer{
@@ -16,20 +19,20 @@ class Process implements Observer{
 	private final int port;
 	private DatagramSocket socket;
 	private final List<Host> hosts;
-	private final int noMessagesToSend;
-	private final FIFOBroadcast fifo;
+	private final String[] config;
+	private List<LatticeAgreement> latticeAgreements;
 	
 	private ArrayList<Message> deliveredMessages;
 	private final String logFilename;
 		
 	private ConcurrentLinkedQueue<String> logs;
 	
-	Process(int id, String ip, int port, List<Host> hosts, int noMessagesToSend, String logFilename){
+	Process(int id, String ip, int port, List<Host> hosts, String[] config, String logFilename){
 		this.id = id;
 		this.ip = ip;
 		this.port = port;
 		this.hosts = hosts;
-		this.noMessagesToSend = noMessagesToSend;
+		this.config = config;
 		this.deliveredMessages = new ArrayList <Message>();
 		this.logFilename = logFilename;
 		this.logs = new ConcurrentLinkedQueue<>();
@@ -38,12 +41,27 @@ class Process implements Observer{
 		} catch (SocketException e) {
 			e.printStackTrace();
 		}
-		this.fifo = new FIFOBroadcast(this, id, port, this.socket, hosts, noMessagesToSend, this.logs);
+		this.latticeAgreements = new ArrayList <LatticeAgreement>();
+		this.la = new LatticeAgreement(this, id, port, this.socket, hosts, config, this.logs);
 		
 	}
 	
-	public void startBroadcast() {
-		fifo.startBroadcast();
+	public void startBroadcast() {		
+		for (int i = 1; i < config.length; i++) {
+        	String[] proposal = config[i].split("\\s+");
+        	Set<Integer> proposalSet = new HashSet<Integer>();
+        	for (int j; j < proposal.length; j++) {
+        		int val = Integer.parseInt(proposal[j]);
+        		proposalSet.add(val);
+        	}
+        	this.latticeAgreements.add(new LatticeAgreement(this, id, port, this.socket, host, message));
+		}
+		
+		for (PerfectLink link: PerfectLinks) {
+			Thread t = new Thread(link);
+			t.start();
+		}
+		la.startBroadcast();
 	}
 	
 	public void deliver(Message message) {
@@ -51,7 +69,7 @@ class Process implements Observer{
 	}
 	
 	public void stopBroadcasting() {
-		FIFOBroadcast.stop();
+		LatticeAgreement.stop();
 	}
 	
 	public void writeLogs() {

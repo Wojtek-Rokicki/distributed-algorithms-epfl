@@ -1,51 +1,69 @@
 package cs451;
 
-import java.nio.ByteBuffer;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.Objects;
+import java.util.Set;
 
-public class Message{
-	private final int seqNo;
-	private final int senderId;
-	private final int destId;
+public class Message implements Serializable{
+	private final int slot;
+	private final MssgType mssgType;
+	private final int propNo;
+	private final Set<Integer> propVals;
 	private int isAck;
 	
-	public Message(int seqNo, int senderId, int destId){
-		this.seqNo = seqNo;
-		this.senderId = senderId;
-		this.destId = destId;
+	enum MssgType{
+		PROPOSAL,
+		ACK,
+		NACK
+	}
+	
+	public Message(int slot, MssgType mssgType, int propNo, Set<Integer> propVals){
+		this.slot = slot;
+		this.mssgType = mssgType;
+		this.propNo = propNo;
+		this.propVals = propVals;
 		this.isAck = 0;
 	}
 	
-	Message(int seqNo, int senderId, int destId, int isAck){
-		this.seqNo = seqNo;
-		this.senderId = senderId;
-		this.destId = destId;
+	Message(int slot, MssgType mssgType, int propNo, Set<Integer> propVals, int isAck){
+		this.slot = slot;
+		this.mssgType = mssgType;
+		this.propNo = propNo;
+		this.propVals = propVals;
 		this.isAck = isAck;
 	}
 	
 	public Message(Message message) {
-		this.seqNo = message.seqNo;
-		this.senderId = message.senderId;
-		this.destId = message.destId;
+		this.slot = message.slot;
+		this.mssgType = message.mssgType;
+		this.propNo = message.propNo;
+		this.propVals = message.propVals;
 		this.isAck = message.isAck;
 	}
 
-	public byte[] toByteArray() {
-		ByteBuffer byteBuffer = ByteBuffer.allocate(16); 
-		byteBuffer.putInt(seqNo); 
-		byteBuffer.putInt(senderId); 
-		byteBuffer.putInt(destId); 
-		byteBuffer.putInt(isAck);
-		return byteBuffer.array();
+	public byte[] toByteArray() throws IOException {
+		byte [] data;
+		try (ByteArrayOutputStream bos = new ByteArrayOutputStream(); 
+			     ObjectOutputStream oos = new ObjectOutputStream(bos)) {
+			    oos.writeObject(this);
+			    oos.flush();
+			    data = bos.toByteArray();
+			}
+		return data;
 	}
 	
-	public static Message fromByteArray(byte[] messageByteArray) {
-		ByteBuffer byteBuffer = ByteBuffer.wrap(messageByteArray);
-		int seqNo = byteBuffer.getInt();
-		int senderId = byteBuffer.getInt();
-		int destId = byteBuffer.getInt();
-		int isAck = byteBuffer.getInt();
-		return new Message(seqNo, senderId, destId, isAck);
+	public static Message fromByteArray(byte[] messageByteArray) throws IOException, ClassNotFoundException {
+		Message deserializedMssg;
+		try (ByteArrayInputStream bis = new ByteArrayInputStream(messageByteArray);
+			     ObjectInputStream ois = new ObjectInputStream(bis)) {
+			    deserializedMssg = (Message) ois.readObject();
+			}
+		return deserializedMssg;
 	}
 	
 	public void ack() {
@@ -56,14 +74,18 @@ public class Message{
 		return (isAck != 0);
 	}
 
-	public int getSeqNo() {
-		return seqNo;
+	public int getSlot() {
+		return slot;
 	}
-	public int getSenderId() {
-		return senderId;
+	
+	public MssgType getMssgType() {
+		return mssgType;
 	}
-	public int getDestId() {
-		return destId;
+	public int getPropNo() {
+		return propNo;
+	}
+	public Set<Integer> getPropVals() {
+		return propVals;
 	}	
 	
 	@Override
@@ -71,9 +93,10 @@ public class Message{
 		if (this==o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
 		Message m = (Message) o;
-		return (Objects.equals(seqNo, m.seqNo) &&
-				Objects.equals(senderId, m.senderId) &&
-				Objects.equals(destId, m.destId));
+		return (Objects.equals(slot, m.slot) &&
+				Objects.equals(mssgType, m.mssgType) &&
+				Objects.equals(propNo, m.propNo) &&
+				Objects.equals(propVals, m.propVals));
 	}
 	
 }

@@ -14,34 +14,32 @@ import cs451.links.PerfectLink;
 public class BestEffortBroadcast implements Observer{
 	private final Observer observer;
 	private final int id;
+	private final int port;
 	private DatagramSocket socket;
-	private List<PerfectLink> PerfectLinks;
+	private List<Host> hosts;
+	private List<PerfectLink> perfectLinks;
 	private HashMap <Integer, ArrayList<Message>> messagesToSend;
 	private ConcurrentLinkedQueue<String> logs;
 	
-	public BestEffortBroadcast(Observer observer, int id, int port, DatagramSocket socket, List<Host> hosts, int noMessagesToSend, ConcurrentLinkedQueue<String> logs){
+	public BestEffortBroadcast(Observer observer, int id, int port, DatagramSocket socket, List<Host> hosts, String[] config, ConcurrentLinkedQueue<String> logs){
 		this.observer = observer;
 		this.id = id;
+		this.port = port;
 		this.socket = socket;
 		this.messagesToSend = new HashMap <Integer, ArrayList<Message>>(); 
-		this.messagesToSend = createMessagesToSend(noMessagesToSend, hosts);
-		this.PerfectLinks = new ArrayList <PerfectLink>();
-		for (Host host: hosts) {
-			this.PerfectLinks.add(new PerfectLink(this, id, port, this.socket, host, messagesToSend.get(host.getId())));
-		}
+		this.messagesToSend = createMessagesToSend(message, hosts);
+		this.perfectLinks = new ArrayList <PerfectLink>();
+		this.hosts = hosts;
 		this.logs = logs;
 	}
 	
-	public void startBroadcast() {
-		for (PerfectLink link: PerfectLinks) {
+	public void startBroadcast(Message m) {
+		for (Host host: hosts) {
+			this.perfectLinks.add(new PerfectLink(this, id, port, this.socket, host, messagesToSend.get(host.getId())));
+		}
+		for (PerfectLink link: perfectLinks) {
 			Thread t = new Thread(link);
 			t.start();
-		}
-		for (Integer proc_id: messagesToSend.keySet()) {
-			for (Message m: messagesToSend.get(proc_id)) {
-				logs.add(String.format("b %d\n", m.getSeqNo()));
-			}
-			break;
 		}
 	}
 
@@ -54,7 +52,7 @@ public class BestEffortBroadcast implements Observer{
 		PerfectLink.stop();
 	}
 	
-	private HashMap<Integer, ArrayList<Message>> createMessagesToSend(int noMessagesToSend, List<Host> hosts){
+	private HashMap<Integer, Message> createMessagesToSend(String[] config, List<Host> hosts){
 		HashMap<Integer, ArrayList<Message>> messagesToSend = new HashMap <Integer, ArrayList<Message>>();
 		for (Host host: hosts) {
 			ArrayList<Message> listOfMessagesToSend = new ArrayList<>();
